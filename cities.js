@@ -12,4 +12,3 @@ function assignPopulationToCity() {
 assignPopulationToCity();
 //oczekiwany rezultat
 // ['Sławno: 13000', 'Kwasowo: 1000', 'Sławsko: 500']
-
