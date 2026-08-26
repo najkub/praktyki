@@ -3,7 +3,12 @@ const population = [13000, 1000, 500];
 
 function assignPopulationToCity() {
    const result = [];
-
+  //  for(let i=0; i <= cities.length; i++){
+   //     result.push(`${cities[i]}: ${population[i]}`);
+   // }
+   cities.forEach((city, index) => {
+    result.push(`${city}: ${population[index]}`);
+   })
     console.log(result);
 }
 assignPopulationToCity();
