@@ -49,7 +49,7 @@ const assignPetsToOwners = (pets, owners) => {
       if (pet.owner == owner.id) {
         ownerPets.push(pet);
       }
-    })
+    })  
     return ownerPets;
   })
 }
@@ -57,3 +57,22 @@ const result = assignPetsToOwners(pets, owners);
 console.log(result);
 //Zadanie 2.
 //Utwórz funkcję, która filtruje wynik poprzedniej funkcji i zwraca tylko tych właścicieli, którze posiadają podany gatunek zwierzęcia
+
+function getOwnersBySpecies(owners, pets, species) {
+    const ownerIds = new Set(
+        pets.filter(pet => pet.species == species)
+            .map(pet => pet.owner)
+    );
+    
+    return owners
+        .filter(owner => ownerIds.has(owner.id))
+        .map(owner => `${owner.name} ${owner.surname}`);        
+}
+const catOwners = getOwnersBySpecies(owners, pets, 'cat');
+console.log(`właściciele kotów: ${catOwners}`);
+
+const dogOwners = getOwnersBySpecies(owners, pets, 'dog');
+console.log(`właściciele psów: ${dogOwners}`);
+
+const hamsterOwners = getOwnersBySpecies(owners, pets, 'hamster');
+console.log(`właściciele chomikow: ${catOwners}`);
