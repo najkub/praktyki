@@ -1,4 +1,5 @@
 const pgp = require('pg-promise')(/* options */);
+const db = pgp('postgres://postgres:Pomidor222@localhost:5432/car_rental');
 
 // db.any('SELECT * FROM cars')
 //   .then((data) => {
@@ -39,7 +40,7 @@ const deleteCars = async (req, res) => {
 
 const addCar = async (req, res) => {
   try {
-    // DEBUG - zobacz co przychodzi
+
     console.log('Headers:', req.headers);
     console.log('Body:', req.body);
     console.log('Body type:', typeof req.body);
@@ -103,9 +104,73 @@ const addCar = async (req, res) => {
   }
 };
 
+const generateCars = async (req, res) => {
+  try {
+    const { count } = req.params;
+    const n = parseInt(count) || 1;
+
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const charsLower = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers = '0123456789';
+    const colors = ['White', 'Black', 'Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Pink', 'Orange'];
+    const fuelTypes = ['Petrol', 'Diesel', 'Hybrid'];
+
+    let added = 0;
+
+    for (let i = 0; i < n; i++) {
+      let model = '';
+      const modelLength = Math.floor(Math.random() * 8);
+      for (let j = 0; j < modelLength; j++) {
+        model += chars[Math.floor(Math.random() * chars.length)];
+      }
+      
+
+      let reg = '';
+      for (let j = 0; j < 3; j++) {
+        reg += chars[Math.floor(Math.random() * chars.length)];
+      }
+      const num = Math.floor(Math.random() * 90000) + 10000;
+      
+      const registration_number = `${reg} ${num}`;
+
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const daily_price = Math.floor(Math.random() * 1000) + 50;
+      const monthly_price = daily_price * (Math.floor(Math.random() * 30) + 10);
+      const seats = Math.floor(Math.random() * 7) + 1;
+      const fuel_type = fuelTypes[Math.floor(Math.random() * fuelTypes.length)];
+      const horsepower = Math.floor(Math.random() * 500) + 50;
+
+      try {
+        await db.one(
+          `INSERT INTO cars 
+           (model, registration_number, color, daily_price, monthly_price, seats, fuel_type, horsepower) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+           RETURNING *`,
+          [model, registration_number, color, daily_price, monthly_price, seats, fuel_type, horsepower]
+        );
+        added++;
+      } catch (error) {
+        if (error.code === '23505') {
+          console.log('Duplikat numeru:', registration_number);
+        }
+      }
+    }
+
+    res.json({ 
+      message: `Added ${added} of ${n} cars!`,
+      added,
+      totalRequested: n
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
   module.exports = {
   selectCars,
   deleteCars,
-  addCar
+  addCar,
+  generateCars
 };
