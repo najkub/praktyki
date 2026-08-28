@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('./db/db.js');
-const { selectCars, deleteCars, addCar } = require('./db/index.js');
+const { selectCars, deleteCars, addCar, generateCars } = require('./db/index.js');
 
 const app = express();
 
@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/cars', selectCars);
 app.delete('/cars/:registration_number', deleteCars);
 app.post('/cars', addCar);
-
+app.get('/generate/:count', generateCars);
 
 app.post('/test', (req, res) => {
     console.log('Test body:', req.body);
