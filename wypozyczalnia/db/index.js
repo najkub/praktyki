@@ -1,5 +1,4 @@
 const pgp = require('pg-promise')(/* options */);
-const db = pgp('postgres://postgres:Pomidor222@localhost:5432/car_rental');
 
 // db.any('SELECT * FROM cars')
 //   .then((data) => {
