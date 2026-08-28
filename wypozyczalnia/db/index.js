@@ -44,7 +44,7 @@ const addCar = async (req, res) => {
     console.log('Body:', req.body);
     console.log('Body type:', typeof req.body);
 
-    // Sprawdź czy body istnieje
+    
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({ 
         message: 'Request body is empty',
@@ -63,7 +63,7 @@ const addCar = async (req, res) => {
       horsepower 
     } = req.body;
 
-    // Walidacja
+    
     if (!model || !registration_number || !color || !daily_price || 
         !monthly_price || !seats || !fuel_type || !horsepower) {
       return res.status(400).json({ 
