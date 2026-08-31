@@ -1,5 +1,6 @@
 const pgp = require('pg-promise')(/* options */);
 
+
 // db.any('SELECT * FROM cars')
 //   .then((data) => {
 //     console.log('DATA:', data);
@@ -103,57 +104,83 @@ const addCar = async (req, res) => {
   }
 };
 
+const generateRandomCarData = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const colors = ['White', 'Black', 'Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Pink', 'Orange'];
+  const fuelTypes = ['Petrol', 'Diesel', 'Hybrid'];
+  
+  let model = '';
+  const modelLength = Math.floor(Math.random() * 8);
+  for (let j = 0; j < modelLength; j++) {
+    model += chars[Math.floor(Math.random() * chars.length)];
+  }
+  
+  let reg = '';
+  for (let j = 0; j < 3; j++) {
+    reg += chars[Math.floor(Math.random() * chars.length)];
+  }
+  const num = Math.floor(Math.random() * 90000) + 10000;
+  const registration_number = `${reg} ${num}`;
+  
+  const daily_price = Math.floor(Math.random() * 1000) + 50;
+  const monthly_price = daily_price * (Math.floor(Math.random() * 30) + 10);
+  
+  return {
+    model,
+    registration_number,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    daily_price,
+    monthly_price,
+    seats: Math.floor(Math.random() * 7) + 1,
+    fuel_type: fuelTypes[Math.floor(Math.random() * fuelTypes.length)],
+    horsepower: Math.floor(Math.random() * 500) + 50
+  };
+};
+
+const generateAndAddOneCar = async () => {
+  const carData = generateRandomCarData();
+  
+  try {
+    await db.one(
+      `INSERT INTO cars 
+       (model, registration_number, color, daily_price, monthly_price, seats, fuel_type, horsepower) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+       RETURNING *`,
+      [carData.model, carData.registration_number, carData.color, 
+       carData.daily_price, carData.monthly_price, carData.seats, 
+       carData.fuel_type, carData.horsepower]
+    );
+    return true;
+  } catch (error) {
+    if (error.code === '23505') {
+      console.log('Duplikat numeru:', carData.registration_number);
+      return false;
+    }
+    throw error;
+  }
+};
+
+const generateMultipleCars = async (count) => {
+  let added = 0;
+  
+  for (let i = 0; i < count; i++) {
+    try {
+      const success = await generateAndAddOneCar();
+      if (success) added++;
+    } catch (error) {
+      console.error('Błąd podczas dodawania samochodu:', error);
+    }
+  }
+  
+  return added;
+};
+
 const generateCars = async (req, res) => {
   try {
     const { count } = req.params;
     const n = parseInt(count) || 1;
 
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const charsLower = 'abcdefghijklmnopqrstuvwxyz';
-    const numbers = '0123456789';
-    const colors = ['White', 'Black', 'Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Pink', 'Orange'];
-    const fuelTypes = ['Petrol', 'Diesel', 'Hybrid'];
-
-    let added = 0;
-
-    for (let i = 0; i < n; i++) {
-      let model = '';
-      const modelLength = Math.floor(Math.random() * 8);
-      for (let j = 0; j < modelLength; j++) {
-        model += chars[Math.floor(Math.random() * chars.length)];
-      }
-      
-
-      let reg = '';
-      for (let j = 0; j < 3; j++) {
-        reg += chars[Math.floor(Math.random() * chars.length)];
-      }
-      const num = Math.floor(Math.random() * 90000) + 10000;
-      
-      const registration_number = `${reg} ${num}`;
-
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      const daily_price = Math.floor(Math.random() * 1000) + 50;
-      const monthly_price = daily_price * (Math.floor(Math.random() * 30) + 10);
-      const seats = Math.floor(Math.random() * 7) + 1;
-      const fuel_type = fuelTypes[Math.floor(Math.random() * fuelTypes.length)];
-      const horsepower = Math.floor(Math.random() * 500) + 50;
-
-      try {
-        await db.one(
-          `INSERT INTO cars 
-           (model, registration_number, color, daily_price, monthly_price, seats, fuel_type, horsepower) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-           RETURNING *`,
-          [model, registration_number, color, daily_price, monthly_price, seats, fuel_type, horsepower]
-        );
-        added++;
-      } catch (error) {
-        if (error.code === '23505') {
-          console.log('Duplikat numeru:', registration_number);
-        }
-      }
-    }
+    const added = await generateMultipleCars(n);
 
     res.json({ 
       message: `Added ${added} of ${n} cars!`,

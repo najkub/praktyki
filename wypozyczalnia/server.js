@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/cars', selectCars);
 app.delete('/cars/:registration_number', deleteCars);
 app.post('/cars', addCar);
-app.get('/generate/:count', generateCars);
+app.get('/cars/generate/:count', generateCars);
 
 app.post('/test', (req, res) => {
     console.log('Test body:', req.body);
