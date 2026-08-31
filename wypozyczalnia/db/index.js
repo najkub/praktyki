@@ -12,14 +12,28 @@ const pgp = require('pg-promise')(/* options */);
   
 const selectCars = async (req, res) => {
   try {
-    const cars = await db.any('SELECT * FROM cars');
-    // console.log(cars);
-    // console.log('Database connection established.');
-    res.json({cars});
+    const page = parseInt(req.query.page) || 1;
+    const limit = 50;
+    const offset = (page - 1) * limit;
+    const cars = await db.any(
+      'SELECT * FROM cars ORDER BY model LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+
+    const total = await db.one('SELECT COUNT(*) FROM cars');
+    const totalPages = Math.ceil(parseInt(total.count) / limit);
+
+    res.json({
+      cars: cars,
+      page: page,
+      totalPages: totalPages
+    });
+
   } catch (error) {
     console.error('Error fetching cars:', error);
-    throw error;
-  }};
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 const deleteCars = async (req, res) => {
   try {
@@ -36,7 +50,6 @@ const deleteCars = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 
 const addCar = async (req, res) => {
   try {
