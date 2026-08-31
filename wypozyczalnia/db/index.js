@@ -1,6 +1,7 @@
 const pgp = require('pg-promise')(/* options */);
 
 
+
 // db.any('SELECT * FROM cars')
 //   .then((data) => {
 //     console.log('DATA:', data);
@@ -13,25 +14,48 @@ const pgp = require('pg-promise')(/* options */);
 const selectCars = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 50;
+    const limit = 20;
     const offset = (page - 1) * limit;
-    const cars = await db.any(
-      'SELECT * FROM cars ORDER BY model LIMIT $1 OFFSET $2',
-      [limit, offset]
-    );
 
-    const total = await db.one('SELECT COUNT(*) FROM cars');
-    const totalPages = Math.ceil(parseInt(total.count) / limit);
+    const { color } = req.query;
+
+    let query = 'SELECT * FROM cars';
+    let countQuery = 'SELECT COUNT(*) FROM cars';
+    const params = [];
+
+    if (color) {
+      query += ' WHERE color ILIKE $1';
+      countQuery += ' WHERE color ILIKE $1';
+      params.push(`%${color}%`);
+    }
+
+    query += ' ORDER BY model';
+    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    const cars = await db.any(query, params);
+    
+    const totalResult = await db.one(countQuery, params.slice(0, -2));
+    const total = parseInt(totalResult.count);
+    const totalPages = Math.ceil(total / limit);
 
     res.json({
       cars: cars,
-      page: page,
-      totalPages: totalPages
+      pagination: {
+        page: page,
+        totalPages: totalPages,
+        limit: limit,
+        totalItems: total
+      },
+      activeFilter: color || 'brak'
     });
 
   } catch (error) {
     console.error('Error fetching cars:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message 
+    });
   }
 };
 
